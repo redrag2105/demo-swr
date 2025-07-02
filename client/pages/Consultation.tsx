@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { CustomerOnly } from "@/components/RoleGuard";
 import {
   MessageCircle,
   Calendar,
@@ -32,12 +33,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { saveUserBooking } from "@/utils/userStorage";
 
 const consultants = [
   {
     id: 1,
-    name: "BS. Nguyễn Thị Hoa",
-    specialty: "Chuyên khoa Sản phụ khoa",
+    name: "Tư vấn viên Nguyễn Thị Hoa",
+    specialty: "Chuyên viên Sức khỏe Phụ nữ",
     experience: "15 năm kinh nghiệm",
     rating: 4.9,
     reviews: 145,
@@ -47,8 +49,8 @@ const consultants = [
   },
   {
     id: 2,
-    name: "BS. Trần Văn Minh",
-    specialty: "Chuyên khoa Nam học",
+    name: "Tư vấn viên Trần Văn Minh",
+    specialty: "Chuyên viên Sức khỏe Nam giới",
     experience: "12 năm kinh nghiệm",
     rating: 4.8,
     reviews: 98,
@@ -58,7 +60,7 @@ const consultants = [
   },
   {
     id: 3,
-    name: "BS. Lê Thị Mai",
+    name: "Tư vấn viên Lê Thị Mai",
     specialty: "Tư vấn sức khỏe sinh sản",
     experience: "10 năm kinh nghiệm",
     rating: 4.7,
@@ -105,7 +107,7 @@ export default function Consultation() {
     if (!selectedConsultant || !selectedDate || !selectedTime) {
       toast({
         title: "Thiếu thông tin",
-        description: "Vui lòng chọn bác sĩ, ngày và giờ tư vấn",
+        description: "Vui lòng chọn tư vấn viên, ngày và giờ tư vấn",
         variant: "destructive",
       });
       return;
@@ -118,9 +120,6 @@ export default function Consultation() {
     try {
       const userEmail = user?.email;
       if (userEmail && selectedConsultantData) {
-        const existingBookings = localStorage.getItem(`healthcare_bookings_${userEmail}`);
-        const bookings = existingBookings ? JSON.parse(existingBookings) : [];
-        
         const newBooking = {
           id: bookingId,
           type: "consultation",
@@ -138,8 +137,7 @@ export default function Consultation() {
           createdAt: new Date().toISOString(),
         };
 
-        bookings.push(newBooking);
-        localStorage.setItem(`healthcare_bookings_${userEmail}`, JSON.stringify(bookings));
+        saveUserBooking(userEmail, newBooking);
       }
     } catch (error) {
       console.error('Error saving booking:', error);
@@ -195,18 +193,19 @@ export default function Consultation() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <MessageCircle className="mx-auto h-16 w-16 text-medical-500" />
-            <h1 className="mt-4 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-              Đặt lịch tư vấn trực tuyến
-            </h1>
-            <p className="mt-4 text-lg text-gray-600">
-              Kết nối với các chuyên gia để được tư vấn về sức khỏe sinh sản
-            </p>
+    <CustomerOnly>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white shadow-sm">
+          <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <MessageCircle className="mx-auto h-16 w-16 text-medical-500" />
+              <h1 className="mt-4 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
+                Đặt lịch tư vấn trực tuyến
+              </h1>
+              <p className="mt-4 text-lg text-gray-600">
+                Kết nối với các tư vấn viên chuyên nghiệp về sức khỏe sinh sản
+              </p>
           </div>
         </div>
       </div>
@@ -217,7 +216,7 @@ export default function Consultation() {
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle>Chọn bác sĩ tư vấn</CardTitle>
+                <CardTitle>Chọn tư vấn viên</CardTitle>
                 <CardDescription>
                   Lựa chọn chuyên gia phù hợp với nhu cầu của bạn
                 </CardDescription>
@@ -427,5 +426,6 @@ export default function Consultation() {
         </div>
       </div>
     </div>
+    </CustomerOnly>
   );
 }

@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { getSampleAccount } from "@/utils/auth";
+import { getSampleAccounts, getRoleDisplayName } from "@/utils/auth";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -25,8 +25,8 @@ export default function Login() {
   const { toast } = useToast();
   const { login } = useAuth();
   
-  // Get sample account data
-  const SAMPLE_ACCOUNT = getSampleAccount();
+  // Get sample accounts data
+  const SAMPLE_ACCOUNTS = getSampleAccounts();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,13 +36,17 @@ export default function Login() {
       let userFound = false;
       let userSession = null;
 
-      // Check sample account first
-      if (email === SAMPLE_ACCOUNT.email && password === SAMPLE_ACCOUNT.password) {
+      // Check sample accounts first
+      const foundSampleAccount = SAMPLE_ACCOUNTS.find(account => 
+        account.email === email && account.password === password
+      );
+      
+      if (foundSampleAccount) {
         userSession = {
-          email: SAMPLE_ACCOUNT.email,
-          name: SAMPLE_ACCOUNT.name,
-          phone: SAMPLE_ACCOUNT.phone,
-          role: SAMPLE_ACCOUNT.role,
+          email: foundSampleAccount.email,
+          name: foundSampleAccount.name,
+          phone: foundSampleAccount.phone,
+          role: foundSampleAccount.role,
           loginTime: new Date().toISOString(),
           sessionId: Math.random().toString(36).substring(2, 15)
         };
@@ -99,12 +103,12 @@ export default function Login() {
   };
 
   // Auto-fill sample account credentials
-  const fillSampleAccount = () => {
-    setEmail(SAMPLE_ACCOUNT.email);
-    setPassword(SAMPLE_ACCOUNT.password);
+  const fillSampleAccount = (account: any) => {
+    setEmail(account.email);
+    setPassword(account.password);
     toast({
       title: "Đã điền thông tin mẫu",
-      description: "Email: user@healthcare.vn | Mật khẩu: 123456",
+      description: `${getRoleDisplayName(account.role)}: ${account.email}`,
     });
   };
 
@@ -123,26 +127,34 @@ export default function Login() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
-            <p className="text-sm text-blue-700 mb-2">
-              <strong>Tài khoản mẫu:</strong>
+          <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-4">
+            <p className="text-sm font-medium text-blue-700 mb-3">
+              🎯 Tài khoản mẫu theo vai trò:
             </p>
-            <p className="text-xs text-blue-600">
-              Email: user@healthcare.vn<br />
-              Mật khẩu: 123456
+            <div className="space-y-2">
+              {SAMPLE_ACCOUNTS.map((account, index) => (
+                <div key={account.email} className="flex items-center justify-between bg-white rounded p-2">
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-gray-900">
+                      {getRoleDisplayName(account.role)}
+                    </p>
+                    <p className="text-xs text-gray-600">{account.email}</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="text-xs px-2 py-1"
+                    onClick={() => fillSampleAccount(account)}
+                  >
+                    Sử dụng
+                  </Button>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-600 mt-3">
+              <em>💡 Mật khẩu cho tất cả tài khoản: [role]123 (vd: admin123)</em>
             </p>
-            <p className="text-xs text-gray-600 mt-2">
-              <em>Hoặc sử dụng tài khoản đã đăng ký</em>
-            </p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="mt-2"
-              onClick={fillSampleAccount}
-            >
-              Điền thông tin mẫu
-            </Button>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">

@@ -14,6 +14,8 @@ import {
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRoles } from "@/components/RoleGuard";
+import { getRoleDisplayName, hasRole } from "@/utils/auth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +37,7 @@ export default function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
+  const { isAdmin, userRole } = useRoles();
 
   const handleLogout = () => {
     logout();
@@ -99,6 +102,9 @@ export default function Navigation() {
                       <p className="text-xs text-muted-foreground">
                         {user?.email}
                       </p>
+                      <p className="text-xs text-blue-600 font-medium">
+                        {getRoleDisplayName(userRole)}
+                      </p>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -108,24 +114,54 @@ export default function Navigation() {
                       <span>Thông tin cá nhân</span>
                     </Link>
                   </DropdownMenuItem>
+                  {hasRole(userRole, ['customer']) && (
                   <DropdownMenuItem asChild>
                     <Link to="/booking-history" className="flex items-center">
                       <Calendar className="mr-2 h-4 w-4" />
                       <span>Lịch sử đặt lịch</span>
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/storage-demo" className="flex items-center">
-                      <span className="mr-2">🗂️</span>
-                      <span>Storage Demo</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/user-management" className="flex items-center">
-                      <span className="mr-2">👥</span>
-                      <span>Quản lý User</span>
-                    </Link>
-                  </DropdownMenuItem>
+                  )}
+                  
+                  {/* Role-specific dashboard links */}
+                  {hasRole(userRole, ['doctor']) && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/doctor-dashboard" className="flex items-center">
+                        <Stethoscope className="mr-2 h-4 w-4" />
+                        <span>Dashboard Bác sĩ</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  
+                  {hasRole(userRole, ['consultant']) && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/consultant-dashboard" className="flex items-center">
+                        <MessageCircle className="mr-2 h-4 w-4" />
+                        <span>Dashboard Tư vấn viên</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  
+                  {/* Admin only links */}
+                  {isAdmin && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link to="/storage-demo" className="flex items-center">
+                          <span className="mr-2">🗂️</span>
+                          <span>Storage Demo</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/user-management" className="flex items-center">
+                          <span className="mr-2">👥</span>
+                          <span>Quản lý User</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Đăng xuất</span>
@@ -189,6 +225,9 @@ export default function Navigation() {
                     <div className="px-3 py-2 text-sm">
                       <div className="font-medium">{user?.name}</div>
                       <div className="text-xs text-gray-500">{user?.email}</div>
+                      <div className="text-xs text-blue-600 font-medium">
+                        {getRoleDisplayName(userRole)}
+                      </div>
                     </div>
                     <Button 
                       variant="ghost" 
@@ -205,21 +244,65 @@ export default function Navigation() {
                       asChild
                       className="justify-start"
                     >
-                      <Link to="/storage-demo">
-                        <span className="mr-2">🗂️</span>
-                        Storage Demo
+                      <Link to="/booking-history">
+                        <Calendar className="mr-2 h-4 w-4" />
+                        Lịch sử đặt lịch
                       </Link>
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      asChild
-                      className="justify-start"
-                    >
-                      <Link to="/user-management">
-                        <span className="mr-2">👥</span>
-                        Quản lý User
-                      </Link>
-                    </Button>
+                    
+                    {/* Role-specific dashboard links */}
+                    {hasRole(userRole, ['doctor']) && (
+                      <Button 
+                        variant="ghost" 
+                        asChild
+                        className="justify-start"
+                      >
+                        <Link to="/doctor-dashboard">
+                          <Stethoscope className="mr-2 h-4 w-4" />
+                          Dashboard Bác sĩ
+                        </Link>
+                      </Button>
+                    )}
+                    
+                    {hasRole(userRole, ['consultant']) && (
+                      <Button 
+                        variant="ghost" 
+                        asChild
+                        className="justify-start"
+                      >
+                        <Link to="/consultant-dashboard">
+                          <MessageCircle className="mr-2 h-4 w-4" />
+                          Dashboard Tư vấn viên
+                        </Link>
+                      </Button>
+                    )}
+                    
+                    {/* Admin only links */}
+                    {isAdmin && (
+                      <>
+                        <Button 
+                          variant="ghost" 
+                          asChild
+                          className="justify-start"
+                        >
+                          <Link to="/storage-demo">
+                            <span className="mr-2">🗂️</span>
+                            Storage Demo
+                          </Link>
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          asChild
+                          className="justify-start"
+                        >
+                          <Link to="/user-management">
+                            <span className="mr-2">👥</span>
+                            Quản lý User
+                          </Link>
+                        </Button>
+                      </>
+                    )}
+                    
                     <Button 
                       variant="ghost" 
                       className="justify-start"

@@ -25,6 +25,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { getUserBookings } from "@/utils/userStorage";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface BookingItem {
@@ -70,13 +71,10 @@ export default function BookingHistory() {
       const userEmail = user?.email;
       if (!userEmail) return;
 
-      const savedBookings = localStorage.getItem(`healthcare_bookings_${userEmail}`);
-      if (savedBookings) {
-        const parsedBookings = JSON.parse(savedBookings);
-        setBookings(parsedBookings.sort((a: BookingItem, b: BookingItem) => 
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        ));
-      }
+      const savedBookings = getUserBookings(userEmail);
+      setBookings(savedBookings.sort((a: BookingItem, b: BookingItem) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      ));
     } catch (error) {
       console.error('Error loading booking history:', error);
     }
@@ -174,9 +172,18 @@ export default function BookingHistory() {
         </div>
 
         {/* Additional details based on type */}
+        {booking.type === "testing" && (
+          <div className="bg-gray-50 rounded-lg p-3 mt-3">
+            <p className="text-sm font-medium">Dịch vụ: {booking.details.service || booking.title}</p>
+            {booking.details.notes && (
+              <p className="text-sm text-gray-600">Ghi chú: {booking.details.notes}</p>
+            )}
+          </div>
+        )}
+
         {booking.type === "consultation" && booking.details.consultant && (
           <div className="bg-gray-50 rounded-lg p-3 mt-3">
-            <p className="text-sm font-medium">Bác sĩ: {booking.details.consultant}</p>
+            <p className="text-sm font-medium">Tư vấn viên: {booking.details.consultant}</p>
             {booking.details.reason && (
               <p className="text-sm text-gray-600">Lý do: {booking.details.reason}</p>
             )}

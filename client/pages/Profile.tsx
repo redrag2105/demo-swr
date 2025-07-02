@@ -1,17 +1,73 @@
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { User, Mail, Phone, Calendar, LogOut } from "lucide-react";
-import { getSampleAccount } from "@/utils/auth";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { 
+  User, 
+  Mail, 
+  Phone, 
+  Calendar,
+  Edit,
+  Save,
+  X,
+  LogOut
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { getRoleDisplayName } from "@/utils/auth";
 
 export default function Profile() {
   const { user, logout, isAuthenticated } = useAuth();
-  const sampleAccount = getSampleAccount();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({
+    name: user?.name || '',
+    phone: user?.phone || '',
+    email: user?.email || ''
+  });
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (user) {
+      setEditData({
+        name: user.name,
+        phone: user.phone,
+        email: user.email
+      });
+    }
+  }, [user]);
+
+  const handleSave = () => {
+    if (!editData.name.trim() || !editData.email.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Vui lòng điền đầy đủ thông tin bắt buộc",
+      });
+      return;
+    }
+
+    // In a real app, this would update via API
+    setIsEditing(false);
+    toast({
+      title: "Cập nhật thành công",
+      description: "Thông tin cá nhân đã được cập nhật",
+    });
+  };
+
+  const handleCancel = () => {
+    setEditData({
+      name: user?.name || '',
+      phone: user?.phone || '',
+      email: user?.email || ''
+    });
+    setIsEditing(false);
+  };
 
   if (!isAuthenticated || !user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-medical-50 to-medical-100 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center px-4">
         <Card className="w-full max-w-md">
           <CardContent className="text-center py-8">
             <p className="text-gray-600">Vui lòng đăng nhập để xem thông tin cá nhân</p>
@@ -36,121 +92,140 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-medical-50 to-medical-100 py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-12 px-4">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Thông tin cá nhân</h1>
-          <p className="text-gray-600">Quản lý thông tin tài khoản của bạn</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Thông tin cá nhân
+          </h1>
+          <p className="text-gray-600">
+            Quản lý thông tin tài khoản của bạn
+          </p>
         </div>
 
-        {/* User Profile Card */}
+        {/* Profile Card */}
         <Card className="shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-medical-500 to-medical-600 text-white rounded-t-lg">
-            <div className="flex items-center space-x-4">
-              <div className="bg-white/20 p-3 rounded-full">
-                <User className="h-8 w-8" />
-              </div>
-              <div>
-                <CardTitle className="text-2xl">{user.name}</CardTitle>
-                <Badge variant="secondary" className="mt-2">
-                  {user.role === 'patient' ? 'Bệnh nhân' : 'Người dùng'}
-                </Badge>
-              </div>
+          <CardHeader className="text-center pb-4">
+            <div className="mx-auto w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-4">
+              <User className="h-12 w-12 text-white" />
             </div>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Basic Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Thông tin cơ bản</h3>
-                
-                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                  <Mail className="h-5 w-5 text-medical-500" />
-                  <div>
-                    <p className="text-sm text-gray-600">Email</p>
-                    <p className="font-medium">{user.email}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                  <Phone className="h-5 w-5 text-medical-500" />
-                  <div>
-                    <p className="text-sm text-gray-600">Số điện thoại</p>
-                    <p className="font-medium">{user.phone}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                  <Calendar className="h-5 w-5 text-medical-500" />
-                  <div>
-                    <p className="text-sm text-gray-600">Thời gian đăng nhập</p>
-                    <p className="font-medium">{formatDate(user.loginTime)}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Extended Profile Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Thông tin bổ sung</h3>
-                
-                {sampleAccount.profile && (
-                  <>
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <p className="text-sm text-gray-600">Tuổi</p>
-                      <p className="font-medium">{sampleAccount.profile.age} tuổi</p>
-                    </div>
-
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <p className="text-sm text-gray-600">Giới tính</p>
-                      <p className="font-medium">{sampleAccount.profile.gender}</p>
-                    </div>
-
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <p className="text-sm text-gray-600">Địa chỉ</p>
-                      <p className="font-medium">{sampleAccount.profile.address}</p>
-                    </div>
-
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <p className="text-sm text-gray-600">Liên hệ khẩn cấp</p>
-                      <p className="font-medium">{sampleAccount.profile.emergencyContact}</p>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Session Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Thông tin phiên đăng nhập</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">Session ID:</span>
-                <code className="text-sm bg-gray-100 px-2 py-1 rounded">{user.sessionId}</code>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">Trạng thái:</span>
-                <Badge variant="default" className="bg-green-500">Hoạt động</Badge>
-              </div>
-              <div className="flex justify-between items-center py-2">
-                <span className="text-gray-600">Loại lưu trữ:</span>
-                <span className="text-sm">
-                  {localStorage.getItem('healthcare_remember') ? 'LocalStorage (Ghi nhớ)' : 'SessionStorage'}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Actions */}
-        <Card>
-          <CardContent className="pt-6">
+            <CardTitle className="text-2xl">{user.name}</CardTitle>
             <div className="flex justify-center">
+              <Badge className="bg-blue-100 text-blue-800">
+                {getRoleDisplayName(user.role)}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Basic Information */}
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="name" className="flex items-center space-x-2">
+                    <User className="h-4 w-4" />
+                    <span>Họ và tên</span>
+                  </Label>
+                  {isEditing ? (
+                    <Input
+                      id="name"
+                      value={editData.name}
+                      onChange={(e) => setEditData(prev => ({ ...prev, name: e.target.value }))}
+                      className="mt-1"
+                    />
+                  ) : (
+                    <p className="mt-1 p-2 bg-gray-50 rounded-md">{user.name}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="email" className="flex items-center space-x-2">
+                    <Mail className="h-4 w-4" />
+                    <span>Email</span>
+                  </Label>
+                  {isEditing ? (
+                    <Input
+                      id="email"
+                      type="email"
+                      value={editData.email}
+                      onChange={(e) => setEditData(prev => ({ ...prev, email: e.target.value }))}
+                      className="mt-1"
+                    />
+                  ) : (
+                    <p className="mt-1 p-2 bg-gray-50 rounded-md">{user.email}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="phone" className="flex items-center space-x-2">
+                    <Phone className="h-4 w-4" />
+                    <span>Số điện thoại</span>
+                  </Label>
+                  {isEditing ? (
+                    <Input
+                      id="phone"
+                      value={editData.phone}
+                      onChange={(e) => setEditData(prev => ({ ...prev, phone: e.target.value }))}
+                      className="mt-1"
+                    />
+                  ) : (
+                    <p className="mt-1 p-2 bg-gray-50 rounded-md">{user.phone}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <Label className="flex items-center space-x-2">
+                    <Calendar className="h-4 w-4" />
+                    <span>Ngày đăng nhập</span>
+                  </Label>
+                  <p className="mt-1 p-2 bg-gray-50 rounded-md">
+                    {formatDate(user.loginTime)}
+                  </p>
+                </div>
+
+                <div>
+                  <Label className="flex items-center space-x-2">
+                    <span>🏷️</span>
+                    <span>Vai trò</span>
+                  </Label>
+                  <p className="mt-1 p-2 bg-gray-50 rounded-md">
+                    {getRoleDisplayName(user.role)}
+                  </p>
+                </div>
+
+                <div>
+                  <Label className="flex items-center space-x-2">
+                    <span>🆔</span>
+                    <span>Session ID</span>
+                  </Label>
+                  <p className="mt-1 p-2 bg-gray-50 rounded-md text-xs font-mono">
+                    {user.sessionId.substring(0, 16)}...
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-center space-x-4 pt-6 border-t">
+              {isEditing ? (
+                <>
+                  <Button onClick={handleSave} className="flex items-center space-x-2">
+                    <Save className="h-4 w-4" />
+                    <span>Lưu thay đổi</span>
+                  </Button>
+                  <Button variant="outline" onClick={handleCancel} className="flex items-center space-x-2">
+                    <X className="h-4 w-4" />
+                    <span>Hủy</span>
+                  </Button>
+                </>
+              ) : (
+                <Button onClick={() => setIsEditing(true)} className="flex items-center space-x-2">
+                  <Edit className="h-4 w-4" />
+                  <span>Chỉnh sửa</span>
+                </Button>
+              )}
               <Button 
                 variant="destructive" 
                 onClick={logout}
@@ -158,6 +233,23 @@ export default function Profile() {
               >
                 <LogOut className="h-4 w-4" />
                 <span>Đăng xuất</span>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Account Security */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Bảo mật tài khoản</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8">
+              <p className="text-gray-600 mb-4">
+                Tính năng quản lý mật khẩu và bảo mật đang được phát triển
+              </p>
+              <Button variant="outline" disabled>
+                Đổi mật khẩu
               </Button>
             </div>
           </CardContent>

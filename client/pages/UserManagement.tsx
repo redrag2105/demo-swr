@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { AdminOnly } from "@/components/RoleGuard";
+import { getSampleAccounts, getRoleDisplayName } from "@/utils/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +52,9 @@ export default function UserManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredUsers, setFilteredUsers] = useState<RegisteredUser[]>([]);
   const { toast } = useToast();
+  
+  // Get sample accounts
+  const sampleAccounts = getSampleAccounts();
 
   // Load registered users from localStorage
   const loadUsers = () => {
@@ -140,20 +145,9 @@ export default function UserManagement() {
     }
   };
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-medical-50 to-medical-100 flex items-center justify-center px-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="text-center py-8">
-            <p className="text-gray-600">Vui lòng đăng nhập để truy cập trang này</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-medical-50 to-medical-100 py-12 px-4">
+    <AdminOnly>
+      <div className="min-h-screen bg-gradient-to-br from-medical-50 to-medical-100 py-12 px-4">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="text-center">
@@ -175,8 +169,8 @@ export default function UserManagement() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Tổng người dùng</p>
-                  <p className="text-2xl font-bold">{registeredUsers.length + 1}</p>
-                  <p className="text-xs text-gray-500">+1 tài khoản mẫu</p>
+                  <p className="text-2xl font-bold">{registeredUsers.length + sampleAccounts.length}</p>
+                  <p className="text-xs text-gray-500">+{sampleAccounts.length} tài khoản mẫu</p>
                 </div>
               </div>
             </CardContent>
@@ -269,32 +263,49 @@ export default function UserManagement() {
           </CardContent>
         </Card>
 
-        {/* Sample Account */}
+        {/* Sample Accounts */}
         <Card className="border-blue-200">
           <CardHeader className="bg-blue-50">
             <CardTitle className="text-blue-700">Tài khoản mẫu (Built-in)</CardTitle>
           </CardHeader>
           <CardContent className="pt-4">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Mail className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm">user@healthcare.vn</span>
+            <div className="grid gap-4">
+              {sampleAccounts.map((account, index) => (
+                <div key={account.email} className="grid md:grid-cols-3 gap-4 p-3 border rounded-lg">
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Mail className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm">{account.email}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Users className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm">{account.name}</span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Phone className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm">{account.phone}</span>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      Mật khẩu: {account.password}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-end">
+                    <Badge 
+                      variant="default" 
+                      className={`
+                        ${account.role === 'admin' ? 'bg-red-500' : 
+                          account.role === 'doctor' ? 'bg-green-500' : 
+                          account.role === 'consultant' ? 'bg-purple-500' : 
+                          account.role === 'customer' ? 'bg-blue-500' : 'bg-gray-500'}
+                      `}
+                    >
+                      {getRoleDisplayName(account.role)}
+                    </Badge>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Users className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm">Nguyễn Văn A</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Phone className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm">0123456789</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-end">
-                <Badge variant="default" className="bg-blue-500">
-                  Tài khoản mẫu
-                </Badge>
-              </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -362,7 +373,7 @@ export default function UserManagement() {
                             </span>
                           </div>
                           <Badge variant="outline">
-                            {user.role === 'patient' ? 'Bệnh nhân' : user.role}
+                            {getRoleDisplayName(user.role)}
                           </Badge>
                         </div>
                       </div>
@@ -403,5 +414,6 @@ export default function UserManagement() {
         </div>
       </div>
     </div>
+    </AdminOnly>
   );
 }

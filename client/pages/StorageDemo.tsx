@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { AdminOnly } from "@/components/RoleGuard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -51,7 +52,8 @@ export default function StorageDemo() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-medical-50 to-medical-100 py-12 px-4">
+    <AdminOnly>
+      <div className="min-h-screen bg-gradient-to-br from-medical-50 to-medical-100 py-12 px-4">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header */}
         <div className="text-center">
@@ -259,5 +261,6 @@ export default function StorageDemo() {
         </Card>
       </div>
     </div>
+    </AdminOnly>
   );
 }

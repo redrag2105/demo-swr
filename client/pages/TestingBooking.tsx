@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { CustomerOnly } from "@/components/RoleGuard";
+import { useUserStorage, STORAGE_KEYS, saveUserBooking } from "@/utils/userStorage";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Stethoscope,
   Calendar,
@@ -29,7 +32,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
 
 const timeSlots = [
   "08:00",
@@ -69,6 +71,7 @@ export default function TestingBooking() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading } = useAuth();
+  const { save } = useUserStorage();
 
   const [packageInfo, setPackageInfo] = useState({
     name: "",
@@ -123,13 +126,10 @@ export default function TestingBooking() {
       (loc) => loc.id.toString() === formData.location,
     );
 
-    // Save booking to localStorage
+    // Save booking to user-specific storage
     try {
       const userEmail = user?.email;
       if (userEmail) {
-        const existingBookings = localStorage.getItem(`healthcare_bookings_${userEmail}`);
-        const bookings = existingBookings ? JSON.parse(existingBookings) : [];
-        
         const newBooking = {
           id: bookingId,
           type: "testing",
@@ -138,16 +138,19 @@ export default function TestingBooking() {
           time: formData.time,
           location: selectedLocationData?.name,
           status: "pending",
-          price: packageInfo.price,
+          price: packageInfo.price.toString(),
           details: {
-            location: selectedLocationData,
+            fullName: user?.name,
+            email: user?.email,
+            phone: user?.phone,
+            service: packageInfo.name,
             notes: formData.notes,
+            selectedLocation: selectedLocationData,
           },
           createdAt: new Date().toISOString(),
         };
 
-        bookings.push(newBooking);
-        localStorage.setItem(`healthcare_bookings_${userEmail}`, JSON.stringify(bookings));
+        saveUserBooking(userEmail, newBooking);
       }
     } catch (error) {
       console.error('Error saving booking:', error);
@@ -201,17 +204,18 @@ export default function TestingBooking() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <Stethoscope className="mx-auto h-16 w-16 text-medical-500" />
-            <h1 className="mt-4 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-              Đặt lịch xét nghiệm STIs
-            </h1>
-            <p className="mt-4 text-lg text-gray-600">
-              Hoàn tất thông tin để đặt lịch xét nghiệm
+    <CustomerOnly>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white shadow-sm">
+          <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <Stethoscope className="mx-auto h-16 w-16 text-medical-500" />
+              <h1 className="mt-4 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
+                Đặt lịch xét nghiệm STIs
+              </h1>
+              <p className="mt-4 text-lg text-gray-600">
+                Hoàn tất thông tin để đặt lịch xét nghiệm
             </p>
           </div>
         </div>
@@ -483,5 +487,6 @@ export default function TestingBooking() {
         </div>
       </div>
     </div>
+    </CustomerOnly>
   );
 }

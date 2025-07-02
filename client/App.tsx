@@ -26,6 +26,8 @@ import BookingHistory from "./pages/BookingHistory";
 import Profile from "./pages/Profile";
 import StorageDemo from "./pages/StorageDemo";
 import UserManagement from "./pages/UserManagement";
+import DoctorDashboard from "./pages/DoctorDashboard";
+import ConsultantDashboard from "./pages/ConsultantDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -64,6 +66,8 @@ const App = () => (
               <Route path="/profile" element={<Profile />} />
               <Route path="/storage-demo" element={<StorageDemo />} />
               <Route path="/user-management" element={<UserManagement />} />
+              <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
+              <Route path="/consultant-dashboard" element={<ConsultantDashboard />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="*" element={<NotFound />} />

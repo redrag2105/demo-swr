@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { CustomerOnly } from "@/components/RoleGuard";
 import {
   Calendar,
   Bell,
@@ -33,6 +34,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { 
+  getUserCycleData, 
+  saveUserCycleData, 
+  getUserCycleSettings, 
+  saveUserCycleSettings 
+} from "@/utils/userStorage";
 import {
   Dialog,
   DialogContent,
@@ -75,7 +82,7 @@ export default function CycleTracking() {
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading } = useAuth();
 
-  // Check authentication
+  // Check authentication and load data
   useEffect(() => {
     // Wait for auth to finish loading
     if (isLoading) return;
@@ -90,7 +97,31 @@ export default function CycleTracking() {
       navigate("/login");
       return;
     }
-  }, [isAuthenticated, isLoading, navigate, toast]);
+
+    // Load user cycle data
+    if (user?.email) {
+      const savedCycleData = getUserCycleData(user.email);
+      const savedSettings = getUserCycleSettings(user.email);
+      
+      setCycleDays(savedCycleData);
+      setLastPeriodDate(savedSettings.lastPeriodDate);
+      setAverageCycleLength(savedSettings.averageCycleLength);
+    }
+  }, [isAuthenticated, isLoading, navigate, toast, user]);
+
+  // Save cycle data when it changes
+  useEffect(() => {
+    if (user?.email && cycleDays.length > 0) {
+      saveUserCycleData(user.email, cycleDays);
+    }
+  }, [cycleDays, user]);
+
+  // Save settings when they change
+  useEffect(() => {
+    if (user?.email && (lastPeriodDate || averageCycleLength !== 28)) {
+      saveUserCycleSettings(user.email, { lastPeriodDate, averageCycleLength });
+    }
+  }, [lastPeriodDate, averageCycleLength, user]);
 
   const symptoms = [
     "Đau bụng",
@@ -223,20 +254,21 @@ export default function CycleTracking() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <Calendar className="mx-auto h-16 w-16 text-medical-500" />
-            <h1 className="mt-4 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-              Theo dõi chu kỳ sinh sản
-            </h1>
-            <p className="mt-4 text-lg text-gray-600">
-              Quản lý và theo dõi chu kỳ kinh nguyệt một cách khoa học và chính
-              xác
-            </p>
-          </div>
+    <CustomerOnly>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white shadow-sm">
+          <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <Calendar className="mx-auto h-16 w-16 text-medical-500" />
+              <h1 className="mt-4 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
+                Theo dõi chu kỳ sinh sản
+              </h1>
+              <p className="mt-4 text-lg text-gray-600">
+                Quản lý và theo dõi chu kỳ kinh nguyệt một cách khoa học và chính
+                xác
+              </p>
+            </div>
         </div>
       </div>
 
@@ -667,5 +699,6 @@ export default function CycleTracking() {
         </div>
       </div>
     </div>
+    </CustomerOnly>
   );
 }
